@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import emailjs from 'emailjs-com';
+import { db } from './firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 const categories = [
   "Architect",
@@ -53,7 +55,7 @@ function CheckIn({ onCheckInSubmit, initialData }) {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (Object.values(formData).some(value => !value)) {
       setError('All fields are required. Please fill out all questions.');
@@ -77,22 +79,27 @@ function CheckIn({ onCheckInSubmit, initialData }) {
       phoneNumber: formattedPhoneNumber
     };
 
-    emailjs.send(
-      process.env.REACT_APP_EMAIL_JS_SERVICE_ID,
-      process.env.REACT_APP_EMAIL_JS_TEMPLATE_ID,
-      emailData,
-      process.env.REACT_APP_USER_ID // The user ID (public key) is used here
-    )
-      .then((response) => {
-        console.log('Email sent successfully:', response.status, response.text);
-        setSuccess('Email sent successfully.');
-        setError('');
-        onCheckInSubmit(dataToSubmit);
-      })
-      .catch((error) => {
-        console.error('Error sending email:', error);
-        setError('Error sending email. Please try again.');
-      });
+    try {
+      // Send email
+      await emailjs.send(
+        process.env.REACT_APP_EMAIL_JS_SERVICE_ID,
+        process.env.REACT_APP_EMAIL_JS_TEMPLATE_ID,
+        emailData,
+        process.env.REACT_APP_USER_ID // The user ID (public key) is used here
+      );
+      console.log('Email sent successfully');
+
+      // Save to Firestore
+      await addDoc(collection(db, 'checkins'), dataToSubmit);
+      console.log('Data saved to Firestore');
+
+      setSuccess('Check-in successful and email sent.');
+      setError('');
+      onCheckInSubmit(dataToSubmit);
+    } catch (error) {
+      console.error('Error during check-in:', error);
+      setError('Error during check-in. Please try again.');
+    }
   };
 
   return (
