@@ -1,9 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
+import emailjs from 'emailjs-com';
+
+const categories = [
+  "Architect",
+  "Priority Architect",
+  "Store",
+  "Designer/Scenographer/Set Designer/Artist",
+  "Interior Studio",
+  "Hotel",
+  "Media",
+  "Furniture Manufacturer",
+  "Representative",
+  "School",
+  "Sewing Studio",
+  "Upholsterer",
+  "Sewing Procurement",
+  "Interior Procurement",
+  "Reseller",
+  "Interior Studio Reseller",
+  "Sewing Studio Reseller",
+  "Upholsterer Reseller",
+  "Other"
+];
 
 function CheckIn({ onCheckInSubmit, initialData }) {
   const [formData, setFormData] = useState(initialData);
   const [countryCode, setCountryCode] = useState('+46');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  useEffect(() => {
+    console.log("Service ID:", process.env.REACT_APP_EMAIL_JS_SERVICE_ID);
+    console.log("Template ID:", process.env.REACT_APP_EMAIL_JS_TEMPLATE_ID);
+    console.log("Public Key:", process.env.REACT_APP_API_PUBLIC_KEY);
+    console.log("User ID:", process.env.REACT_APP_USER_ID);
+  }, []);
 
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -23,20 +55,53 @@ function CheckIn({ onCheckInSubmit, initialData }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (Object.values(formData).some(value => !value)) {
+      setError('All fields are required. Please fill out all questions.');
+      return;
+    }
+
     const fullPhoneNumber = `${countryCode}${formData.phoneNumber}`;
     const phoneNumber = parsePhoneNumberFromString(fullPhoneNumber);
-    if (phoneNumber) {
-      onCheckInSubmit({ ...formData, phoneNumber: phoneNumber.formatInternational() });
-    } else {
-      onCheckInSubmit({ ...formData, phoneNumber: fullPhoneNumber });
-    }
+    const formattedPhoneNumber = phoneNumber ? phoneNumber.formatInternational() : fullPhoneNumber;
+
+    const dataToSubmit = { ...formData, phoneNumber: formattedPhoneNumber };
+
+    const emailData = {
+      to_name: formData.name,
+      name: formData.name,
+      email: formData.email,
+      company: formData.company,
+      country: formData.country,
+      city: formData.city,
+      workTitle: formData.workTitle,
+      phoneNumber: formattedPhoneNumber
+    };
+
+    emailjs.send(
+      process.env.REACT_APP_EMAIL_JS_SERVICE_ID,
+      process.env.REACT_APP_EMAIL_JS_TEMPLATE_ID,
+      emailData,
+      process.env.REACT_APP_USER_ID // The user ID (public key) is used here
+    )
+      .then((response) => {
+        console.log('Email sent successfully:', response.status, response.text);
+        setSuccess('Email sent successfully.');
+        setError('');
+        onCheckInSubmit(dataToSubmit);
+      })
+      .catch((error) => {
+        console.error('Error sending email:', error);
+        setError('Error sending email. Please try again.');
+      });
   };
 
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6 text-gray-800">Event Check-In</h2>
+      {error && <p className="text-red-500 mb-4">{error}</p>}
+      {success && <p className="text-green-500 mb-4">{success}</p>}
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="mb-4">
+        <div className="mb-4 md:col-span-1">
           <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
             Name
           </label>
@@ -49,7 +114,7 @@ function CheckIn({ onCheckInSubmit, initialData }) {
             placeholder="Your name"
           />
         </div>
-        <div className="mb-4">
+        <div className="mb-4 md:col-span-1">
           <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
             Email
           </label>
@@ -62,7 +127,7 @@ function CheckIn({ onCheckInSubmit, initialData }) {
             placeholder="Your email"
           />
         </div>
-        <div className="mb-4 col-span-2">
+        <div className="mb-4 md:col-span-2">
           <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="phoneNumber">
             Phone Number
           </label>
@@ -85,7 +150,7 @@ function CheckIn({ onCheckInSubmit, initialData }) {
             />
           </div>
         </div>
-        <div className="mb-4">
+        <div className="mb-4 md:col-span-1">
           <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="company">
             Company
           </label>
@@ -98,7 +163,7 @@ function CheckIn({ onCheckInSubmit, initialData }) {
             placeholder="Your company"
           />
         </div>
-        <div className="mb-4">
+        <div className="mb-4 md:col-span-1">
           <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="country">
             Country
           </label>
@@ -111,7 +176,7 @@ function CheckIn({ onCheckInSubmit, initialData }) {
             placeholder="Your country"
           />
         </div>
-        <div className="mb-4">
+        <div className="mb-4 md:col-span-1">
           <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="city">
             City
           </label>
@@ -124,20 +189,24 @@ function CheckIn({ onCheckInSubmit, initialData }) {
             placeholder="Your city"
           />
         </div>
-        <div className="mb-4">
+        <div className="mb-4 md:col-span-1">
           <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="workTitle">
-            Work Title
+            Category
           </label>
-          <input
+          <select
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
             id="workTitle"
-            type="text"
             value={formData.workTitle}
             onChange={handleChange}
-            placeholder="Your work title"
-          />
+          >
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
         </div>
-        <div className="flex items-center justify-between col-span-1 md:col-span-2">
+        <div className="flex items-center justify-between md:col-span-2">
           <button
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
             type="submit"
