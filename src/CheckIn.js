@@ -29,7 +29,7 @@ const categories = [
 ];
 
 function CheckIn({ onCheckInSubmit, initialData }) {
-  const [formData, setFormData] = useState(initialData);
+  const [formData, setFormData] = useState({ ...initialData, newsletter: false });
   const [countryCode, setCountryCode] = useState('+46');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -50,6 +50,14 @@ function CheckIn({ onCheckInSubmit, initialData }) {
     }));
   };
 
+  const handleCheckboxChange = (e) => {
+    const { id, checked } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [id]: checked
+    }));
+  };
+
   const handlePhoneNumberChange = (e) => {
     const { value } = e.target;
     setFormData((prevData) => ({
@@ -60,7 +68,7 @@ function CheckIn({ onCheckInSubmit, initialData }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (Object.values(formData).some(value => !value)) {
+    if (Object.values(formData).some(value => value === '')) {
       setError('All fields are required. Please fill out all questions.');
       return;
     }
@@ -111,8 +119,8 @@ function CheckIn({ onCheckInSubmit, initialData }) {
       <h2 className="text-2xl font-bold mb-6 text-gray-800">Check-In</h2>
       {error && <p className="text-red-500 mb-4">{error}</p>}
       {success && <p className="text-green-500 mb-4">{success}</p>}
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="mb-4 md:col-span-1">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
+        <div className="md:col-span-2">
           <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
             Name
           </label>
@@ -125,7 +133,7 @@ function CheckIn({ onCheckInSubmit, initialData }) {
             placeholder="Your name"
           />
         </div>
-        <div className="mb-4 md:col-span-1">
+        <div className="md:col-span-2">
           <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
             Email
           </label>
@@ -138,13 +146,13 @@ function CheckIn({ onCheckInSubmit, initialData }) {
             placeholder="Your email"
           />
         </div>
-        <div className="mb-4 md:col-span-2">
+        <div className="md:col-span-2">
           <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="phoneNumber">
             Phone Number
           </label>
           <div className="flex">
             <input
-              className="shadow appearance-none border rounded-l w-1/5 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              className="shadow appearance-none border rounded-l w-1/4 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               id="countryCode"
               type="text"
               value={countryCode}
@@ -152,7 +160,7 @@ function CheckIn({ onCheckInSubmit, initialData }) {
               placeholder="+46"
             />
             <input
-              className="shadow appearance-none border rounded-r w-4/5 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              className="shadow appearance-none border rounded-r w-3/4 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               id="phoneNumber"
               type="tel"
               value={formData.phoneNumber}
@@ -161,7 +169,7 @@ function CheckIn({ onCheckInSubmit, initialData }) {
             />
           </div>
         </div>
-        <div className="mb-4 md:col-span-1">
+        <div className="md:col-span-2">
           <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="company">
             Company
           </label>
@@ -174,7 +182,7 @@ function CheckIn({ onCheckInSubmit, initialData }) {
             placeholder="Your company"
           />
         </div>
-        <div className="mb-4 md:col-span-1">
+        <div>
           <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="country">
             Country
           </label>
@@ -187,7 +195,7 @@ function CheckIn({ onCheckInSubmit, initialData }) {
             placeholder="Your country"
           />
         </div>
-        <div className="mb-4 md:col-span-1">
+        <div>
           <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="city">
             City
           </label>
@@ -200,7 +208,7 @@ function CheckIn({ onCheckInSubmit, initialData }) {
             placeholder="Your city"
           />
         </div>
-        <div className="mb-4 md:col-span-1">
+        <div className="md:col-span-2">
           <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="workTitle">
             Profession
           </label>
@@ -217,13 +225,28 @@ function CheckIn({ onCheckInSubmit, initialData }) {
             ))}
           </select>
         </div>
-        <div className="flex items-center justify-between md:col-span-2">
+        <div className="md:col-span-2">
+          <label className="flex items-center text-gray-700 text-sm font-bold mb-2" htmlFor="newsletter">
+            <input
+              className="form-checkbox h-4 w-4 text-blue-600"
+              id="newsletter"
+              type="checkbox"
+              checked={formData.newsletter}
+              onChange={handleCheckboxChange}
+            />
+            <span className="ml-2">I want to subscribe to the newsletter</span>
+          </label>
+        </div>
+        <div className="md:col-span-2 flex items-center justify-between">
           <button
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
             type="submit"
           >
             Submit
           </button>
+        </div>
+        <div className="md:col-span-2 text-gray-600 text-xs mt-2">
+          By submitting this form, you consent to us handling your data in accordance with GDPR regulations.
         </div>
       </form>
     </div>
