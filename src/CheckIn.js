@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import emailjs from 'emailjs-com';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import { db } from './firebase';
 import { collection, addDoc } from 'firebase/firestore';
 
 const categories = [
+  "Your profession",
   "Architect",
   "Priority Architect",
   "Store",
@@ -31,6 +33,7 @@ function CheckIn({ onCheckInSubmit, initialData }) {
   const [countryCode, setCountryCode] = useState('+46');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const navigate = useNavigate(); // Initialize useNavigate
 
   useEffect(() => {
     console.log("Service ID:", process.env.REACT_APP_EMAIL_JS_SERVICE_ID);
@@ -66,7 +69,7 @@ function CheckIn({ onCheckInSubmit, initialData }) {
     const phoneNumber = parsePhoneNumberFromString(fullPhoneNumber);
     const formattedPhoneNumber = phoneNumber ? phoneNumber.formatInternational() : fullPhoneNumber;
 
-    const dataToSubmit = { ...formData, phoneNumber: formattedPhoneNumber };
+    const dataToSubmit = { ...formData, phoneNumber: fullPhoneNumber };
 
     const emailData = {
       to_name: formData.name,
@@ -96,6 +99,7 @@ function CheckIn({ onCheckInSubmit, initialData }) {
       setSuccess('Check-in successful and email sent.');
       setError('');
       onCheckInSubmit(dataToSubmit);
+      navigate('/thank-you'); // Navigate to the "Thank You" page
     } catch (error) {
       console.error('Error during check-in:', error);
       setError('Error during check-in. Please try again.');
@@ -104,7 +108,7 @@ function CheckIn({ onCheckInSubmit, initialData }) {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">Event Check-In</h2>
+      <h2 className="text-2xl font-bold mb-6 text-gray-800">Check-In</h2>
       {error && <p className="text-red-500 mb-4">{error}</p>}
       {success && <p className="text-green-500 mb-4">{success}</p>}
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -198,7 +202,7 @@ function CheckIn({ onCheckInSubmit, initialData }) {
         </div>
         <div className="mb-4 md:col-span-1">
           <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="workTitle">
-            Category
+            Profession
           </label>
           <select
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
