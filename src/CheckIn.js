@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import emailjs from 'emailjs-com';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigate } from 'react-router-dom';
 import { db } from './firebase';
 import { collection, addDoc } from 'firebase/firestore';
 
@@ -33,14 +32,8 @@ function CheckIn({ onCheckInSubmit, initialData }) {
   const [countryCode, setCountryCode] = useState('+46');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    console.log("Service ID:", process.env.REACT_APP_EMAIL_JS_SERVICE_ID);
-    console.log("Template ID:", process.env.REACT_APP_EMAIL_JS_TEMPLATE_ID);
-    console.log("Public Key:", process.env.REACT_APP_API_PUBLIC_KEY);
-    console.log("User ID:", process.env.REACT_APP_USER_ID);
-  }, []);
 
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -66,16 +59,38 @@ function CheckIn({ onCheckInSubmit, initialData }) {
     }));
   };
 
+  const validateForm = () => {
+    const nameRegex = /^[A-Za-z\s]+$/;
+    const phoneRegex = /^[0-9]+$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!nameRegex.test(formData.name)) {
+      return 'Name must only contain letters and spaces.';
+    }
+    if (!phoneRegex.test(formData.phoneNumber)) {
+      return 'Phone number must only contain numbers.';
+    }
+    if (!emailRegex.test(formData.email)) {
+      return 'Email must be in a valid format.';
+    }
+    if (Object.values(formData).some(value => value === '')) {
+      return 'All fields are required. Please fill out all questions.';
+    }
+
+    return '';
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (Object.values(formData).some(value => value === '')) {
-      setError('All fields are required. Please fill out all questions.');
+
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
     const fullPhoneNumber = `${countryCode}${formData.phoneNumber}`;
-    const phoneNumber = parsePhoneNumberFromString(fullPhoneNumber);
-    const formattedPhoneNumber = phoneNumber ? phoneNumber.formatInternational() : fullPhoneNumber;
+    const formattedPhoneNumber = fullPhoneNumber;
 
     const dataToSubmit = { ...formData, phoneNumber: fullPhoneNumber };
 
@@ -96,7 +111,7 @@ function CheckIn({ onCheckInSubmit, initialData }) {
         process.env.REACT_APP_EMAIL_JS_SERVICE_ID,
         process.env.REACT_APP_EMAIL_JS_TEMPLATE_ID,
         emailData,
-        process.env.REACT_APP_USER_ID // The user ID (public key) is used here
+        process.env.REACT_APP_USER_ID
       );
       console.log('Email sent successfully');
 
@@ -107,7 +122,7 @@ function CheckIn({ onCheckInSubmit, initialData }) {
       setSuccess('Check-in successful and email sent.');
       setError('');
       onCheckInSubmit(dataToSubmit);
-      navigate('/thank-you'); // Navigate to the "Thank You" page
+      navigate('/thank-you');
     } catch (error) {
       console.error('Error during check-in:', error);
       setError('Error during check-in. Please try again.');
